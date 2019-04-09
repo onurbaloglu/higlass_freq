@@ -9,17 +9,32 @@ import os
 import sys
 import cooler
 import matplotlib.colors
+from itertools import combinations
+import fileinput
+import os.path
 
+for i in range (1,5):
+    file_name = input ("enter the file location and name of the mcool file:\n")
+    if os.path.isfile(file_name):
+        print ('your file name is: %s' %file_name)
+        break
+    else :
+        print ("folder not found!! enter the folder name of the mcool file again:\n  ")
+        if i == 4:
+            print('iteration exceeded!!! ')
+limit = int(input('enter the chr number:\n'))
+out_name =str(input("enter the basename for the output file:\n"))
+res = int(input('enter the resolution :\n'))
 
 #read mcool file
-c = cooler.Cooler('/../../n/scratch2/onur/MARCH/4DNFI7Z381GX.mcool'"::/resolutions/100000") #need to user input bot file and resolution
+c = cooler.Cooler('%s'"::/resolutions/%s" %(file_name,res)) 
 
-
-pixs = c.matrix(as_pixels=True).fetch('chr19')
+pixs = c.matrix(as_pixels=True).fetch('chr%s' %limit)
 sub = pixs.iloc[0,0]
 pixs.iloc[:,0] = pixs.iloc[:,0] - sub
 pixs.iloc[:,1] = pixs.iloc[:,1] - sub
 pix = pixs.iloc[:]
+
 
 
 ###opening empty file
@@ -66,33 +81,48 @@ emptyGAM.iloc[:,5] = emptyGAM.iloc[:,4]/emptyGAM.iloc[:,2]
 
 
 ##writing a result file
-meanGAM =open("RESULTS_sum_chr19_4DN_0308.txt" , "a")
-
-for i in range (1, tGAM-1):
-    meanGAM.write (str(emptyGAM.iloc[i,1])) ##unbalanced sum
-    meanGAM.write ('\t')
-    meanGAM.write (str(emptyGAM.iloc[i,3])) ##unbalanced mean
-    meanGAM.write ('\t')
-    meanGAM.write (str(emptyGAM.iloc[i,4])) ##balanced sum
-    meanGAM.write ('\t')
-    meanGAM.write (str(emptyGAM.iloc[i,5])) ##balanced mean
-    meanGAM.write ('\n')
-    
-meanGAM.close()
+RESULT = pd.DataFrame(data=emptyGAM.iloc[:,[1,3,4,5]])
+RESULT.to_csv('%s.csv' %out_name, index=False , header=None , sep='\t' )
 
 
 ##plotting
+##for seperate plots 
+x = emptyGAM.iloc[1:-1,3]
+y = emptyGAM.iloc[1:-1,5]
 
-x = emptyGAM.iloc[:,1]
-y = emptyGAM.iloc[:,4]*10000   ##balance is too small to observe
+#unbalanced
+plt.switch_backend('agg')
+plt.figure(figsize=(20,5))
+plt.plot(x.iloc[5:,]  ,color='green', label= '%s_unBal.png'  %out_name)
+plt.legend(loc='upper right')
+plt.xlabel('location')
+plt.ylabel('sum')
+plt.savefig('%s_unBal.png'  %out_name)
+
+#balanced
+plt.switch_backend('agg')
+plt.figure(figsize=(20,5))
+plt.plot(y.iloc[5:,] ,color='blue', label= '%s_Bal.png'  %out_name)
+plt.legend(loc='upper right')
+plt.xlabel('location')
+plt.ylabel('sum')
+plt.savefig('%s_Bal.png'  %out_name)
+
+##plotting together
+
+x = emptyGAM.iloc[1:-1,3]
+y = emptyGAM.iloc[1:-1,5]*1000
 
 #plt.yscale('log')
 plt.figure(figsize=(15,4))
-plt.plot(x.iloc[20:-1]  ,color='green', label='unbalanced') 
+plt.title('%s' %out_name, size=18)
+plt.plot(x.iloc[20:-1]  ,color='green', label='unbalanced')
 plt.plot(y.iloc[20:-1] ,color='blue', label='balanced')
 plt.legend(loc='upper right')
+plt.xticks(size=12)
+plt.yticks(size=12)
 
 plt.xlabel('location')
 plt.ylabel('sum')
 #plt.show()
-plt.savefig('NA-eliminated_sum_chr19_4DN_0308.png')
+plt.savefig('%s_BuB.png'  %out_name)
