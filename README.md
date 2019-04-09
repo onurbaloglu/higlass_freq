@@ -1,4 +1,4 @@
-higlass_freq
+codes for mcool to freq-distance and column-sum
 
 this codes are for generating freq-distance or sum graphs from mcool files.
 
